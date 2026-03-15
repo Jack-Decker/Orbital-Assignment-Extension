@@ -11,7 +11,7 @@ pygame.init()
 # CREATE WINDOW
 screen_width, screen_height = pygame.display.get_desktop_sizes()[0]
 SIZE = 0.7*min(screen_height, screen_width)
-window = pygame.display.set_mode([2*SIZE+1, SIZE])
+window = pygame.display.set_mode(flags=RESIZABLE)
 center = Vector2(window.get_width(), window.get_height()) / 2
 screen_center = (screen_width/2, screen_height/2)
 
@@ -27,7 +27,7 @@ clock = pygame.time.Clock()
 FPS = 60
 dt = 1/FPS
 clock.tick()
-playing = False
+playing = True
 clearing = False
 
 # SETUP
@@ -47,16 +47,44 @@ shipThrust = Circle(radius = SIZE/45, color = pygame.Color("yellow"), width = 0,
 # Dots array
 if playing:
     dots = [
-    Circle(radius = (SIZE/60), color = pygame.Color("white"), width = 0, mass = 1),
     Circle(radius = SIZE/60, color = pygame.Color("white"), width = 0, mass = 1),
     Circle(radius = SIZE/60, color = pygame.Color("white"), width = 0, mass = 1),
     Circle(radius = SIZE/60, color = pygame.Color("white"), width = 0, mass = 1),
     Circle(radius = SIZE/60, color = pygame.Color("white"), width = 0, mass = 1),
     Circle(radius = SIZE/60, color = pygame.Color("white"), width = 0, mass = 1),
-    Circle(radius = SIZE/60, color = pygame.Color("white"), width = 0, mass = 1)
+    Circle(radius = SIZE/60, color = pygame.Color("white"), width = 0, mass = 1),
+    Circle(radius = SIZE/60, color = pygame.Color("white"), width = 0, mass = 1),
+    Circle(radius = SIZE/60, color = pygame.Color("white"), width = 0, mass = 1),
+    Circle(radius = SIZE/60, color = pygame.Color("white"), width = 0, mass = 1),
+    Circle(radius = SIZE/60, color = pygame.Color("white"), width = 0, mass = 1),
+    Circle(radius = SIZE/60, color = pygame.Color("white"), width = 0, mass = 1),
+    Circle(radius = SIZE/60, color = pygame.Color("white"), width = 0, mass = 1),
+    Circle(radius = SIZE/60, color = pygame.Color("white"), width = 0, mass = 1),
+    Circle(radius = SIZE/60, color = pygame.Color("white"), width = 0, mass = 1),
+    Circle(radius = SIZE/60, color = pygame.Color("white"), width = 0, mass = 1),
     ]
 else:
     dots = []
+if playing:
+    dots2 = [
+    Circle(radius = SIZE/60, color = pygame.Color("white"), width = 0, mass = 1),
+    Circle(radius = SIZE/60, color = pygame.Color("white"), width = 0, mass = 1),
+    Circle(radius = SIZE/60, color = pygame.Color("white"), width = 0, mass = 1),
+    Circle(radius = SIZE/60, color = pygame.Color("white"), width = 0, mass = 1),
+    Circle(radius = SIZE/60, color = pygame.Color("white"), width = 0, mass = 1),
+    Circle(radius = SIZE/60, color = pygame.Color("white"), width = 0, mass = 1),
+    Circle(radius = SIZE/60, color = pygame.Color("white"), width = 0, mass = 1),
+    Circle(radius = SIZE/60, color = pygame.Color("white"), width = 0, mass = 1),
+    Circle(radius = SIZE/60, color = pygame.Color("white"), width = 0, mass = 1),
+    Circle(radius = SIZE/60, color = pygame.Color("white"), width = 0, mass = 1),
+    Circle(radius = SIZE/60, color = pygame.Color("white"), width = 0, mass = 1),
+    Circle(radius = SIZE/60, color = pygame.Color("white"), width = 0, mass = 1),
+    Circle(radius = SIZE/60, color = pygame.Color("white"), width = 0, mass = 1),
+    Circle(radius = SIZE/60, color = pygame.Color("white"), width = 0, mass = 1),
+    Circle(radius = SIZE/60, color = pygame.Color("white"), width = 0, mass = 1),
+    ]
+else:
+    dots2 = []
 #An array for storing the radius of each dots orbit from the sun
 # An array for storing the radius of each dots orbit from the sun
 dotRanges = []
@@ -67,9 +95,18 @@ for dot in dots:
     dotRanges.append(orbital_radius)
     j += 1
 
+dotRanges2 = []
+radii_allowed_area = (window.get_width() * 1/4) - sun2.radius
+j = 1
+for dot in dots2:
+    orbital_radius = radii_allowed_area * j/len(dots2) + sun2.radius + 10
+    dotRanges2.append(orbital_radius)
+    j += 1
+
 # function for randomizing initial positions
 def randomize_dots():
     i = 0
+    j = 0
     if dots:
         for dot in dots:
             # Choose a random angle theta
@@ -79,6 +116,15 @@ def randomize_dots():
             # y = sun.pos.y + radius * sin(theta)
             dot.pos.y = sun.pos.y + dotRanges[i] * math.sin(theta)
             i += 1
+    if dots2:
+        for dot in dots2:
+            # Choose a random angle theta
+            theta = random.uniform(0, math.pi * 2)
+            # x = sun.pos.x + radius * cos(theta)
+            dot.pos.x = sun2.pos.x + dotRanges2[j] * math.cos(theta)
+            # y = sun.pos.y + radius * sin(theta)
+            dot.pos.y = sun2.pos.y + dotRanges2[j] * math.sin(theta)
+            j += 1
 
 # Function for getting initial velocities (in = initial)
 def initial_vels():
@@ -92,6 +138,11 @@ def initial_vels():
             in_dot_speed = math.sqrt(G/sun.pos.distance_to(dot.pos))
             in_dot_dir = (dot.pos - sun.pos).normalize().rotate(90)
             dot.vel = in_dot_speed * in_dot_dir
+    if dots2:
+        for dot in dots2:
+            in_dot_speed2 = math.sqrt(G/sun2.pos.distance_to(dot.pos))
+            in_dot_dir2 = (dot.pos - sun2.pos).normalize().rotate(90)
+            dot.vel = -1 * (in_dot_speed2 * in_dot_dir2)
 
 def start_game():
     ship.clear_force()
@@ -103,9 +154,15 @@ def start_game():
     active = True
     if dots:
         if len(dots) < len(dotRanges):
-            for i in range(len(dotRanges) - len(dots)):
+            for j in range(len(dotRanges) - len(dots)):
                 dots.append(Circle(radius = SIZE/60, color = pygame.Color("white"), width = 0, mass = 1))
-                i += 1
+                j += 1
+        randomize_dots()
+    if dots2:
+        if len(dots2) < len(dotRanges2):
+            for k in range(len(dotRanges2) - len(dots2)):
+                dots2.append(Circle(radius = SIZE/60, color = pygame.Color("white"), width = 0, mass = 1))
+                k += 1
         randomize_dots()
     initial_vels()
     start_time = pygame.time.get_ticks() - game_loop_start_time
@@ -168,6 +225,8 @@ while state != "quit":
         ship.clear_force()
         for dot in dots:
             dot.clear_force()
+        for dot in dots2:
+            dot.clear_force()
 
         ## Add forces
         ### Gravitational force toward sun
@@ -183,6 +242,11 @@ while state != "quit":
             if dot_r != 0:
                 dot_gravForce = (-1 * G * (sun.mass/dot_r.magnitude()**3) * dot_r)
                 dot.add_acc(dot_gravForce)
+        for dot in dots2:
+            dot_r2 = dot.pos - sun2.pos
+            if dot_r2 != 0:
+                dot_gravForce2 = (-1 * G * (sun.mass/dot_r2.magnitude()**3) * dot_r2)
+                dot.add_acc(dot_gravForce2)
 
         ### Thrust force
         thrust = Vector2()
@@ -207,19 +271,24 @@ while state != "quit":
             shipThrust.update(dt)
         for dot in dots:
             dot.update(dt)
+        for dot in dots2:
+            dot.update(dt)
         # GAME ELEMENTS
         ## Dot collection
         if alive:
             for dot in dots:
                 if ship.pos.distance_to(dot.pos) < (ship.radius + dot.radius):
                     dots.remove(dot)
+            for dot in dots2:
+                if ship.pos.distance_to(dot.pos) < (ship.radius + dot.radius):
+                    dots2.remove(dot)
 
         # Draw the sun
         sun.draw(window)
         sun2.draw(window)
 
         ## Winning
-        if not dots and playing:
+        if not dots and not dots2 and playing:
             # show "You Won!" on screen
             state = "win"
             text = pygame.font.SysFont("arial", 150).render("You Won!", True, Color("green"))
@@ -253,6 +322,8 @@ while state != "quit":
 
         # Draw the dots
         for dot in dots:
+            dot.draw(window)
+        for dot in dots2:
             dot.draw(window)
         # EVENTS
         while event := pygame.event.poll():

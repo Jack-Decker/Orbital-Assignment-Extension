@@ -27,17 +27,29 @@ clock = pygame.time.Clock()
 FPS = 60
 dt = 1/FPS
 clock.tick()
-playing = True
-clearing = False
+playing = False
+clearing = True
 
 # SETUP
+# Black hole
+black_hole = Circle(radius = SIZE/25, color = pygame.Color("darkgrey"),
+width = 0, pos = (center.x, center.y + 43), mass = 1)
 # Sun
-sun = Circle(radius = SIZE/10, color = pygame.Color("yellow"),
-width = 0, pos = (center.x - 250, center.y + 200), mass = 1)
-sun2 = Circle(radius = SIZE/10, color = pygame.Color("yellow"),
-width = 0, pos = (center.x + 250, center.y + 200), mass = 1)
-sun3 = Circle(radius = SIZE/10, color = pygame.Color("yellow"),
-width = 0, pos = (center.x, center.y - 200), mass = 1)
+sun_radius = SIZE/15
+sun_color = pygame.Color("Yellow")
+
+sun = Circle(radius = sun_radius, color = sun_color,
+width = 0, pos = (center.x - 220, center.y + 170), mass = 1)
+
+sun2 = Circle(radius = sun_radius, color = sun_color,
+width = 0, pos = (center.x + 220, center.y + 170), mass = 1)
+
+sun3 = Circle(radius = sun_radius, color = sun_color, 
+width = 0, pos = (center.x, center.y + 170 - (math.sqrt(3)*220)), mass = 1)
+
+print(sun.pos.distance_to(black_hole.pos))
+print(sun2.pos.distance_to(black_hole.pos))
+print(sun3.pos.distance_to(black_hole.pos))
 
 # Ship
 ship = Circle(radius = SIZE/30, color = pygame.Color("skyblue"), width = 0, mass = 1)
@@ -60,10 +72,10 @@ else:
 #An array for storing the radius of each dots orbit from the sun
 # An array for storing the radius of each dots orbit from the sun
 dotRanges = []
-radii_allowed_area = (window.get_width() * 1/4) - sun.radius
+radii_allowed_area = (window.get_width() * 1/6) - black_hole.radius
 j = 1
 for dot in dots:
-    orbital_radius = radii_allowed_area * j/len(dots) + sun.radius + 10
+    orbital_radius = radii_allowed_area * j/len(dots) + black_hole.radius + 30
     dotRanges.append(orbital_radius)
     j += 1
 
@@ -74,10 +86,10 @@ def randomize_dots():
         for dot in dots:
             # Choose a random angle theta
             theta = random.uniform(0, math.pi * 2)
-            # x = sun.pos.x + radius * cos(theta)
-            dot.pos.x = sun.pos.x + dotRanges[i] * math.cos(theta)
-            # y = sun.pos.y + radius * sin(theta)
-            dot.pos.y = sun.pos.y + dotRanges[i] * math.sin(theta)
+            # x = black_hole.pos.x + radius * cos(theta)
+            dot.pos.x = black_hole.pos.x + dotRanges[i] * math.cos(theta)
+            # y = black_hole.pos.y + radius * sin(theta)
+            dot.pos.y = black_hole.pos.y + dotRanges[i] * math.sin(theta)
             i += 1
 
 # Function for getting initial velocities (in = initial)
@@ -86,23 +98,24 @@ def initial_vels():
     # Default initial velocity values (one sun)
     #ship.vel.x = math.sqrt(2 * G * sun.mass / sun.pos.distance_to(ship.pos))
 
-    # Orbital 2 initial velocity values (two suns)
+    # Orbital version 2 initial velocity values (two suns)
     #ship.vel = (160, 200)
 
-    # After-project extension initial velocity values (three suns)
-    ship.vel = (180, 40)
+    # Orbital version 3 initial velocity values (three suns)
+    # This version was made after the assignment for class was done
+    ship.vel = (180, -220)
 
     # DOTS
     if dots:
         for dot in dots:
-            in_dot_speed = math.sqrt(G/sun.pos.distance_to(dot.pos))
-            in_dot_dir = (dot.pos - sun.pos).normalize().rotate(90)
+            in_dot_speed = math.sqrt(G/black_hole.pos.distance_to(dot.pos))
+            in_dot_dir = (dot.pos - black_hole.pos).normalize().rotate(90)
             dot.vel = in_dot_speed * in_dot_dir
 
 def start_game():
     ship.clear_force()
     ship.set_velocity(0)
-    ship.pos = ((window.get_width()/2), window.get_height()/2)
+    ship.pos = (center)
     global state, alive, win, dot, dots, start_time, seconds, minutes, active, pause_seconds, time_when_paused
     alive = True
     win = False
@@ -181,14 +194,13 @@ while state != "quit":
         r, r2, r3 = (ship.pos - sun.pos), (ship.pos - sun2.pos), (ship.pos - sun3.pos)
         m, m2, m3 = r.magnitude(), r2.magnitude(), r3.magnitude()
         if r != [0, 0] and r2 != [0, 0] and r3 != [0, 0]:
-            gravForce = ((-1 * G * (sun.mass/m**3)* r) - 
-            (G * (sun2.mass/m2**3)* r2)  - (G * (sun3.mass/m3**3)* r3))
+            gravForce = ((-1 * G * (1/m**3)* r) - (G * (1/m2**3)* r2)  - (G * (1/m3**3)* r3))
             ship.add_acc(gravForce)
         
         for dot in dots:
-            dot_r = dot.pos - sun.pos
+            dot_r = dot.pos - black_hole.pos
             if dot_r != 0:
-                dot_gravForce = (-1 * G * (sun.mass/dot_r.magnitude()**3) * dot_r)
+                dot_gravForce = (-1 * G * (1/dot_r.magnitude()**3) * dot_r)
                 dot.add_acc(dot_gravForce)
 
         ### Thrust force
@@ -225,6 +237,7 @@ while state != "quit":
         sun.draw(window)
         sun2.draw(window)
         sun3.draw(window)
+        black_hole.draw(window)
 
         ## Winning
         if not dots and playing:
@@ -235,15 +248,16 @@ while state != "quit":
             win = True
 
         ## Losing
-        if ((ship.pos.distance_to(sun.pos) < (ship.radius + sun.radius) and win == False) or 
-        (ship.pos.distance_to(sun2.pos) < (ship.radius + sun2.radius) and win == False) or
-        (ship.pos.distance_to(sun3.pos) < (ship.radius + sun3.radius) and win == False)):
-            state = "lose"
-            #delete the ship
-            alive = False
-            # show "You Lost!" on screen
-            text = pygame.font.SysFont("arial", 150).render("You Lost!", True, Color("red"))
-            window.blit(text, (center.x - text.get_width()/2, center.y  -text.get_height()/2))
+        if playing:
+            if ((ship.pos.distance_to(sun.pos) < (ship.radius + sun.radius) and win == False) or 
+            (ship.pos.distance_to(sun2.pos) < (ship.radius + sun2.radius) and win == False) or
+            (ship.pos.distance_to(sun3.pos) < (ship.radius + sun3.radius) and win == False)):
+                state = "lose"
+                #delete the ship
+                alive = False
+                # show "You Lost!" on screen
+                text = pygame.font.SysFont("arial", 150).render("You Lost!", True, Color("red"))
+                window.blit(text, (center.x - text.get_width()/2, center.y  -text.get_height()/2))
 
         # GRAPHICS
         # Draw the ship elements
