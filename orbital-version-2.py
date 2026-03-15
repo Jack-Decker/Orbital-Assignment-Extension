@@ -27,7 +27,7 @@ clock = pygame.time.Clock()
 FPS = 60
 dt = 1/FPS
 clock.tick()
-playing = True
+playing = False
 clearing = False
 
 # SETUP
@@ -39,8 +39,15 @@ width = 0, pos = (center.x + 250, center.y), mass = 1)
 centerG = Circle(radius = SIZE/30, color = pygame.Color("darkgrey"),
 width = 0, pos = center, mass = 1)
 
+# rainbow colors for fun
+col_r, col_g, col_b = 0, 120, 255
+color_speed = 10
+rl250 = True
+gl250 = True
+bl250 = False
+
 # Ship
-ship = Circle(radius = SIZE/30, color = pygame.Color("skyblue"), width = 0, mass = 1)
+ship = Circle(radius = SIZE/30, color = [col_r, col_g, col_b], width = 0, mass = 1)
 shipThrust = Circle(radius = SIZE/45, color = pygame.Color("yellow"), width = 0, pos = ship.pos)
 
 # Dots
@@ -305,6 +312,42 @@ while state != "quit":
             text = pygame.font.SysFont("arial", 150).render("You Lost!", True, Color("red"))
             window.blit(text, (center.x - text.get_width()/2, center.y  -text.get_height()/2))
 
+        #Making the circle and its 
+        # stripes change color smoothly
+        #------------------------------
+        if col_r <= 245:
+            if rl250 == True:
+                col_r += color_speed
+        else:
+            rl250 = False
+        if not rl250:
+            if col_r >= 10:
+                col_r -= color_speed
+            else:
+                rl250 = True
+        if col_g <= 245:
+            if gl250 == True:
+                col_g += color_speed
+        else:
+            gl250 = False
+        if not gl250:
+            if col_g >= 10:
+                col_g -= color_speed
+            else:
+                gl250 = True
+        if col_b <= 245:
+            if bl250 == True:
+                col_b += color_speed
+        else:
+            bl250 = False
+        if not bl250:
+            if col_b >= 10:
+                col_b -= color_speed
+            else:
+                bl250 = True
+        ship.color = [col_r, col_g, col_b]
+        #------------------------------
+
         # GRAPHICS
         # Draw the ship elements
         if alive:
@@ -343,7 +386,8 @@ while state != "quit":
                 window.fill((0,0,0))
         
         if not pygame.mouse.get_focused() and not pygame.key.get_focused():
-            pause_game()
+            #pause_game()
+            pass
     while event := pygame.event.poll():
         if event.type == QUIT or event.type == KEYDOWN and event.key == K_ESCAPE:
                 state = "quit"
